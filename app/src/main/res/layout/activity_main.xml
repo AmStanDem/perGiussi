@@ -5,7 +5,7 @@
     android:id="@+id/constrainLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/background_light"
+    android:background="@drawable/background"
     tools:context=".MainActivity">
 
     <androidx.appcompat.widget.Toolbar
@@ -22,21 +22,6 @@
         app:title="Bluetooth Connection"
         app:titleTextColor="@android:color/background_light" />
 
-    <ImageView
-        android:id="@+id/imageView"
-        android:layout_width="200dp"
-        android:layout_height="300dp"
-        android:layout_marginTop="24dp"
-        android:background="@color/colorOff"
-        android:contentDescription="Visual LED"
-        android:scaleType="centerCrop"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/toolbar"
-        app:srcCompat="@drawable/ic_bulb_light"
-        tools:ignore="VectorDrawableCompat" />
-
     <Button
         android:id="@+id/buttonConnect"
         style="@style/Widget.AppCompat.Button.Borderless"
@@ -48,19 +33,6 @@
         app:layout_constraintEnd_toEndOf="@+id/toolbar"
         app:layout_constraintTop_toTopOf="@+id/toolbar" />
 
-    <Button
-        android:id="@+id/buttonToggle"
-        style="@style/Widget.AppCompat.Button.Colored"
-        android:layout_width="200dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="400dp"
-        android:text="Turn On"
-        android:textSize="24sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
     <ProgressBar
         android:id="@+id/progressBar"
         style="?android:attr/progressBarStyle"
@@ -68,23 +40,125 @@
         android:layout_height="wrap_content"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.092" />
 
     <TextView
         android:id="@+id/textViewInfo"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
         android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
         android:textAlignment="center"
         android:textStyle="italic"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <GridLayout
+        android:layout_width="@dimen/greed_layout_size"
+        android:layout_height="@dimen/greed_layout_size"
+        android:layout_marginTop="90dp"
+        android:columnCount="3"
+        android:gravity="center"
+        android:rowCount="3"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/buttonToggle" />
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageButton
+            android:id="@+id/btn_up_left"
+            android:layout_width="@dimen/movement_button_size"
+            android:layout_height="@dimen/movement_button_size"
+            android:layout_columnWeight="1"
+            android:layout_gravity="fill_horizontal"
+            android:background="@drawable/left_forward_0"
+            android:contentDescription="TODO" />
+
+        <ImageButton
+            android:id="@+id/btn_up"
+            android:layout_width="@dimen/movement_button_size"
+            android:layout_height="@dimen/movement_button_size"
+            android:layout_row="0"
+            android:layout_column="1"
+            android:layout_columnWeight="1"
+            android:layout_gravity="fill_horizontal"
+            android:background="@drawable/forward_0"
+            android:text="button" />
+
+        <ImageButton
+            android:id="@+id/btn_up_right"
+            android:layout_width="@dimen/movement_button_size"
+            android:layout_height="@dimen/movement_button_size"
+            android:layout_columnWeight="1"
+            android:layout_gravity="fill_horizontal"
+            android:background="@drawable/left_forward_0"
+            android:rotation="90"
+            android:text="button" />
+
+        <ImageButton
+            android:id="@+id/btn_left"
+            android:layout_width="@dimen/movement_button_size"
+            android:layout_height="@dimen/movement_button_size"
+            android:layout_columnWeight="1"
+            android:layout_gravity="fill_horizontal"
+            android:background="@drawable/rotate_left_0"
+            android:text="button" />
+
+        <ImageView
+            android:id="@+id/img_icon"
+            android:layout_width="@dimen/movement_button_size"
+            android:layout_height="@dimen/movement_button_size"
+            android:layout_columnWeight="1"
+            android:layout_gravity="fill_horizontal"
+            android:background="@drawable/makerslab"
+            android:rotation="0"
+            android:rotationX="0"
+            android:text="button" />
+
+        <ImageButton
+            android:id="@+id/btn_right"
+            android:layout_width="@dimen/movement_button_size"
+            android:layout_height="@dimen/movement_button_size"
+            android:layout_columnWeight="1"
+            android:layout_gravity="fill_horizontal"
+            android:background="@drawable/rotate_right_0"
+            android:text="button" />
+
+        <ImageButton
+            android:id="@+id/btn_down_left"
+            android:layout_width="@dimen/movement_button_size"
+            android:layout_height="@dimen/movement_button_size"
+            android:layout_columnWeight="1"
+            android:layout_gravity="fill_horizontal"
+            android:background="@drawable/left_backward_0"
+            android:text="button" />
+
+        <ImageButton
+            android:id="@+id/btn_down"
+            android:layout_width="@dimen/movement_button_size"
+            android:layout_height="@dimen/movement_button_size"
+            android:layout_columnWeight="1"
+            android:layout_gravity="fill_horizontal"
+            android:background="@drawable/forward_0"
+            android:rotation="180"
+            android:text="button" />
+
+        <ImageButton
+            android:id="@+id/btn_down_right"
+            android:layout_width="@dimen/movement_button_size"
+            android:layout_height="@dimen/movement_button_size"
+            android:layout_columnWeight="1"
+            android:layout_gravity="fill_horizontal"
+            android:background="@drawable/right_backward_0"
+            android:text="button" />
+
+    </GridLayout>
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

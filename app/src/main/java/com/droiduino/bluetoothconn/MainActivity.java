@@ -1,22 +1,22 @@
 package com.droiduino.bluetoothconn;
 
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
+import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
-import android.widget.ImageView;
+import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -29,6 +29,10 @@ import java.util.UUID;
 import static android.content.ContentValues.TAG;
 
 public class MainActivity extends AppCompatActivity {
+    public static final int SX_WELL_MAX = 180, SX_WELL_MIN = 0;
+    public static final int DX_WELL_MAX = 0, DX_WELL_MIN = 180;
+    public static final int WELL_STOP = 90;
+
 
     private String deviceName = null;
     private String deviceAddress;
@@ -40,6 +44,7 @@ public class MainActivity extends AppCompatActivity {
     private final static int CONNECTING_STATUS = 1; // used in bluetooth handler to identify message status
     private final static int MESSAGE_READ = 2; // used in bluetooth handler to identify message update
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -51,10 +56,16 @@ public class MainActivity extends AppCompatActivity {
         final ProgressBar progressBar = findViewById(R.id.progressBar);
         progressBar.setVisibility(View.GONE);
         final TextView textViewInfo = findViewById(R.id.textViewInfo);
-        final Button buttonToggle = findViewById(R.id.buttonToggle);
-        buttonToggle.setEnabled(false);
-        final ImageView imageView = findViewById(R.id.imageView);
-        imageView.setBackgroundColor(getResources().getColor(R.color.colorOff));
+        final ImageButton btnUpLeft = findViewById(R.id.btn_up_left);
+        final ImageButton btnUp = findViewById(R.id.btn_up);
+        final ImageButton btnUpRight = findViewById(R.id.btn_up_right);
+        final ImageButton btnLeft = findViewById(R.id.btn_left);
+        final ImageButton btnRight = findViewById(R.id.btn_right);
+        final ImageButton btnDownLeft = findViewById(R.id.btn_down_left);
+        final ImageButton btnDown = findViewById(R.id.btn_down);
+        final ImageButton btnDownRight = findViewById(R.id.btn_down_right);
+
+
 
         // If a bluetooth device has been selected from SelectDeviceActivity
         deviceName = getIntent().getStringExtra("deviceName");
@@ -89,7 +100,7 @@ public class MainActivity extends AppCompatActivity {
                                 toolbar.setSubtitle("Connected to " + deviceName);
                                 progressBar.setVisibility(View.GONE);
                                 buttonConnect.setEnabled(true);
-                                buttonToggle.setEnabled(true);
+
                                 break;
                             case -1:
                                 toolbar.setSubtitle("Device fails to connect");
@@ -103,11 +114,11 @@ public class MainActivity extends AppCompatActivity {
                         String arduinoMsg = msg.obj.toString(); // Read message from Arduino
                         switch (arduinoMsg.toLowerCase()){
                             case "led is turned on":
-                                imageView.setBackgroundColor(getResources().getColor(R.color.colorOn));
+
                                 textViewInfo.setText("Arduino Message : " + arduinoMsg);
                                 break;
                             case "led is turned off":
-                                imageView.setBackgroundColor(getResources().getColor(R.color.colorOff));
+
                                 textViewInfo.setText("Arduino Message : " + arduinoMsg);
                                 break;
                         }
@@ -126,28 +137,81 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // Button to ON/OFF LED on Arduino Board
-        buttonToggle.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                String cmdText = null;
-                String btnState = buttonToggle.getText().toString().toLowerCase();
-                switch (btnState){
-                    case "turn on":
-                        buttonToggle.setText("Turn Off");
-                        // Command to turn on LED on Arduino. Must match with the command in Arduino code
-                        cmdText = "<turn on>";
-                        break;
-                    case "turn off":
-                        buttonToggle.setText("Turn On");
-                        // Command to turn off LED on Arduino. Must match with the command in Arduino code
-                        cmdText = "<turn off>";
-                        break;
-                }
-                // Send command to Arduino board
-                connectedThread.write(cmdText);
+        //set on touch for movement button
+        btnUpLeft.setOnTouchListener((v, event) -> {
+            if(event.getAction() == MotionEvent.ACTION_DOWN){
+                sendVelocity(WELL_STOP,DX_WELL_MAX);
             }
+            if(event.getAction() == MotionEvent.ACTION_UP || event.getAction() == MotionEvent.ACTION_CANCEL){
+                sendVelocity(WELL_STOP,WELL_STOP);
+            }
+            return false;
         });
+        btnUp.setOnTouchListener((v, event) -> {
+            if(event.getAction() == MotionEvent.ACTION_DOWN){
+                sendVelocity(SX_WELL_MAX,DX_WELL_MAX);
+            }
+            if(event.getAction() == MotionEvent.ACTION_UP || event.getAction() == MotionEvent.ACTION_CANCEL){
+                sendVelocity(WELL_STOP,WELL_STOP);
+            }
+            return false;
+        });
+        btnUpRight.setOnTouchListener((v, event) -> {
+            if(event.getAction() == MotionEvent.ACTION_DOWN){
+                sendVelocity(SX_WELL_MAX,WELL_STOP);
+            }
+            if(event.getAction() == MotionEvent.ACTION_UP || event.getAction() == MotionEvent.ACTION_CANCEL){
+                sendVelocity(WELL_STOP,WELL_STOP);
+            }
+            return false;
+        });
+        btnLeft.setOnTouchListener((v, event) -> {
+            if(event.getAction() == MotionEvent.ACTION_DOWN){
+                sendVelocity(SX_WELL_MIN,DX_WELL_MAX);
+            }
+            if(event.getAction() == MotionEvent.ACTION_UP || event.getAction() == MotionEvent.ACTION_CANCEL){
+                sendVelocity(WELL_STOP,WELL_STOP);
+            }
+            return false;
+        });
+        btnRight.setOnTouchListener((v, event) -> {
+            if(event.getAction() == MotionEvent.ACTION_DOWN){
+                sendVelocity(SX_WELL_MAX,DX_WELL_MIN);
+            }
+            if(event.getAction() == MotionEvent.ACTION_UP || event.getAction() == MotionEvent.ACTION_CANCEL){
+                sendVelocity(WELL_STOP,WELL_STOP);
+            }
+            return false;
+        });
+        btnDownLeft.setOnTouchListener((v, event) -> {
+            if(event.getAction() == MotionEvent.ACTION_DOWN){
+                sendVelocity(WELL_STOP,DX_WELL_MIN);
+            }
+            if(event.getAction() == MotionEvent.ACTION_UP || event.getAction() == MotionEvent.ACTION_CANCEL){
+                sendVelocity(WELL_STOP,WELL_STOP);
+            }
+            return false;
+        });
+        btnDown.setOnTouchListener((v, event) -> {
+            if(event.getAction() == MotionEvent.ACTION_DOWN){
+                sendVelocity(SX_WELL_MIN,DX_WELL_MIN);
+            }
+            if(event.getAction() == MotionEvent.ACTION_UP || event.getAction() == MotionEvent.ACTION_CANCEL){
+                sendVelocity(WELL_STOP,WELL_STOP);
+            }
+            return false;
+        });
+        btnDownRight.setOnTouchListener((v, event) -> {
+            if(event.getAction() == MotionEvent.ACTION_DOWN){
+                sendVelocity(SX_WELL_MIN,WELL_STOP);
+            }
+            if(event.getAction() == MotionEvent.ACTION_UP || event.getAction() == MotionEvent.ACTION_CANCEL){
+                sendVelocity(WELL_STOP,WELL_STOP);
+            }
+            return false;
+        });
+
+
     }
 
     /* ============================ Thread to Create Bluetooth Connection =================================== */
@@ -265,8 +329,10 @@ public class MainActivity extends AppCompatActivity {
         }
 
         /* Call this from the main activity to send data to the remote device */
-        public void write(String input) {
-            byte[] bytes = input.getBytes(); //converts entered String into bytes
+        public void writeVelocity(int sxV, int dxV) {
+            byte[] bytes = new byte[2];
+            bytes[0] = new Integer(sxV).byteValue();
+            bytes[1] = new Integer(dxV).byteValue();
             try {
                 mmOutStream.write(bytes);
             } catch (IOException e) {
@@ -293,5 +359,10 @@ public class MainActivity extends AppCompatActivity {
         a.addCategory(Intent.CATEGORY_HOME);
         a.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(a);
+    }
+
+    public void sendVelocity(int sxV, int dxV){
+        connectedThread.writeVelocity(sxV, dxV);
+
     }
 }
