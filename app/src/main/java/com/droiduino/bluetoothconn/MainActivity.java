@@ -1,6 +1,7 @@
 package com.droiduino.bluetoothconn;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.content.res.AppCompatResources;
 import androidx.appcompat.widget.Toolbar;
 
 import android.annotation.SuppressLint;
@@ -8,6 +9,8 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
+import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -16,8 +19,10 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
+import android.widget.GridLayout;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
+import android.widget.Switch;
 import android.widget.TextView;
 
 
@@ -25,14 +30,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.UUID;
+import java.util.Vector;
 
 import static android.content.ContentValues.TAG;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements View.OnTouchListener {
     public static final int SX_WELL_MAX = 180, SX_WELL_MIN = 0;
     public static final int DX_WELL_MAX = 0, DX_WELL_MIN = 180;
     public static final int WELL_STOP = 90;
-
+    public static String arrowsText;
+    public static String joystickText;
 
     private String deviceName = null;
     private String deviceAddress;
@@ -40,30 +47,45 @@ public class MainActivity extends AppCompatActivity {
     public static BluetoothSocket mmSocket;
     public static ConnectedThread connectedThread;
     public static CreateConnectThread createConnectThread;
+    private Vector<View> pressedDirections;
+
 
     private final static int CONNECTING_STATUS = 1; // used in bluetooth handler to identify message status
     private final static int MESSAGE_READ = 2; // used in bluetooth handler to identify message update
+    private ImageButton btnUpLeft, btnUp, btnUpRight;
+    private ImageButton btnLeft, btnRight;
+    private ImageButton btnDownLeft, btnDown, btnDownRight;
+    private GridLayout gridLayout;
+    private JoystickView joystick;
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        arrowsText = getString(R.string.switch_mode_arrows);
+        joystickText = getString(R.string.switch_mode_joystick);
 
         // UI Initialization
+        gridLayout = findViewById(R.id.greed_layout);
+        joystick = findViewById(R.id.joystick);
         final Button buttonConnect = findViewById(R.id.buttonConnect);
+        final Switch btnSwitch = findViewById(R.id.switch_mode);
         final Toolbar toolbar = findViewById(R.id.toolbar);
         final ProgressBar progressBar = findViewById(R.id.progressBar);
         progressBar.setVisibility(View.GONE);
         final TextView textViewInfo = findViewById(R.id.textViewInfo);
-        final ImageButton btnUpLeft = findViewById(R.id.btn_up_left);
-        final ImageButton btnUp = findViewById(R.id.btn_up);
-        final ImageButton btnUpRight = findViewById(R.id.btn_up_right);
-        final ImageButton btnLeft = findViewById(R.id.btn_left);
-        final ImageButton btnRight = findViewById(R.id.btn_right);
-        final ImageButton btnDownLeft = findViewById(R.id.btn_down_left);
-        final ImageButton btnDown = findViewById(R.id.btn_down);
-        final ImageButton btnDownRight = findViewById(R.id.btn_down_right);
+        btnUpLeft = findViewById(R.id.btn_up_left);
+        btnUp = findViewById(R.id.btn_up);
+        btnUpRight = findViewById(R.id.btn_up_right);
+        btnLeft = findViewById(R.id.btn_left);
+        btnRight = findViewById(R.id.btn_right);
+        btnDownLeft = findViewById(R.id.btn_down_left);
+        btnDown = findViewById(R.id.btn_down);
+        btnDownRight = findViewById(R.id.btn_down_right);
+
+        //other initializations
+        pressedDirections = new Vector<>();
 
 
 
@@ -136,80 +158,94 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
+        btnSwitch.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(btnSwitch.getText().toString().equals(arrowsText)){
+                    btnSwitch.setText(joystickText);
+                    gridLayout.setVisibility(View.INVISIBLE);
+                    joystick.setVisibility(View.VISIBLE);
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        btnSwitch.setThumbTintList(AppCompatResources.getColorStateList(MainActivity.this,R.color.color_joystick));
+                    }
+                }else {
+                    btnSwitch.setText(arrowsText);
+                    gridLayout.setVisibility(View.VISIBLE);
+                    joystick.setVisibility(View.INVISIBLE);
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        btnSwitch.setThumbTintList(AppCompatResources.getColorStateList(MainActivity.this,R.color.color_arrows));
+                    }
+                }
+            }
+
+        });
+        joystick.setOnMoveListener(new JoystickView.OnMoveListener() {
+            @Override
+            public void onMove(int angle, int strength) {
+                //Log.d("Status", angle+"  " +strength);
+                int sxV = WELL_STOP, dxV = WELL_STOP;
+                float sinPercent = 0;
+                float angleRad = (float) Math.toRadians(angle);
+                if(angle >= 0 && angle < 45){
+                    sxV = SX_WELL_MAX;
+                    dxV = DX_WELL_MIN;
+                }
+                if(angle >= 45  && angle < 90){
+                    sinPercent = (float)((Math.sin(angleRad)-Math.sin(Math.toRadians(45)))/(Math.sin(Math.toRadians(90))-Math.sin(Math.toRadians(45))));
+                    sxV = SX_WELL_MAX;
+                    dxV = (int)(sinPercent*DX_WELL_MIN);
+                }
+                if(angle >= 90  && angle < 90+45){
+                    sinPercent = (float)(Math.sin(angle)*Math.sin(90+45)/Math.sin(90));
+                    sxV = (int)(sinPercent*SX_WELL_MAX);
+                    dxV = DX_WELL_MAX;
+                }
+                if(angle >= 90+45  && angle < 180){
+                    sxV = SX_WELL_MIN;
+                    dxV = DX_WELL_MAX;
+                }
+                if(angle >= 180  && angle < 180+45){
+                    sxV = SX_WELL_MAX;
+                    dxV = DX_WELL_MIN;
+                }
+                if(angle >= 180+45  && angle < 270){
+                    sinPercent = -(float)(Math.sin(angle)*Math.sin(270)/Math.sin(180+45));
+                    sxV = (int)(sinPercent*SX_WELL_MIN);
+                    dxV = DX_WELL_MIN;
+                }
+                if(angle >= 270  && angle < 270+45){
+                    sinPercent = -(float)(Math.sin(angle)*Math.sin(270+45)/Math.sin(270));
+                    sxV = SX_WELL_MIN;
+                    dxV = (int)(sinPercent*DX_WELL_MIN);
+                }
+                if(angle >= 270+45  && angle <= 360){
+                    sxV = SX_WELL_MIN;
+                    dxV = DX_WELL_MAX;
+                }
+
+                sxV = sxV >= WELL_STOP ? sxV - WELL_STOP*(100-strength)/100 : sxV + WELL_STOP*(100-strength)/100;
+                dxV = dxV >= WELL_STOP ? dxV - WELL_STOP*(100-strength)/100 : dxV + WELL_STOP*(100-strength)/100;
+
+                Log.d("Status", sxV+"    "+dxV);
+                Log.d("Status", sinPercent+"");
+                Log.d("Status", Math.sin(Math.toRadians(90))-Math.sin(Math.toRadians(45))+"b");
+                Log.d("Status", Math.sin(Math.toRadians(angle))-Math.sin(Math.toRadians(45))+"d");
+                Log.d("Status", angle+"e");
+                Log.d("Status", Math.sin(Math.toRadians(angle))+"  "+Math.sin(Math.toRadians(90))+"   "+Math.sin(Math.toRadians(45))+"f");
+
+                //connectedThread.writeVelocity(sxV, dxV);
+            }
+        });
 
         //set on touch for movement button
-        btnUpLeft.setOnTouchListener((v, event) -> {
-            if(event.getAction() == MotionEvent.ACTION_DOWN){
-                sendVelocity(WELL_STOP,DX_WELL_MAX);
-            }
-            if(event.getAction() == MotionEvent.ACTION_UP || event.getAction() == MotionEvent.ACTION_CANCEL){
-                sendVelocity(WELL_STOP,WELL_STOP);
-            }
-            return false;
-        });
-        btnUp.setOnTouchListener((v, event) -> {
-            if(event.getAction() == MotionEvent.ACTION_DOWN){
-                sendVelocity(SX_WELL_MAX,DX_WELL_MAX);
-            }
-            if(event.getAction() == MotionEvent.ACTION_UP || event.getAction() == MotionEvent.ACTION_CANCEL){
-                sendVelocity(WELL_STOP,WELL_STOP);
-            }
-            return false;
-        });
-        btnUpRight.setOnTouchListener((v, event) -> {
-            if(event.getAction() == MotionEvent.ACTION_DOWN){
-                sendVelocity(SX_WELL_MAX,WELL_STOP);
-            }
-            if(event.getAction() == MotionEvent.ACTION_UP || event.getAction() == MotionEvent.ACTION_CANCEL){
-                sendVelocity(WELL_STOP,WELL_STOP);
-            }
-            return false;
-        });
-        btnLeft.setOnTouchListener((v, event) -> {
-            if(event.getAction() == MotionEvent.ACTION_DOWN){
-                sendVelocity(SX_WELL_MIN,DX_WELL_MAX);
-            }
-            if(event.getAction() == MotionEvent.ACTION_UP || event.getAction() == MotionEvent.ACTION_CANCEL){
-                sendVelocity(WELL_STOP,WELL_STOP);
-            }
-            return false;
-        });
-        btnRight.setOnTouchListener((v, event) -> {
-            if(event.getAction() == MotionEvent.ACTION_DOWN){
-                sendVelocity(SX_WELL_MAX,DX_WELL_MIN);
-            }
-            if(event.getAction() == MotionEvent.ACTION_UP || event.getAction() == MotionEvent.ACTION_CANCEL){
-                sendVelocity(WELL_STOP,WELL_STOP);
-            }
-            return false;
-        });
-        btnDownLeft.setOnTouchListener((v, event) -> {
-            if(event.getAction() == MotionEvent.ACTION_DOWN){
-                sendVelocity(WELL_STOP,DX_WELL_MIN);
-            }
-            if(event.getAction() == MotionEvent.ACTION_UP || event.getAction() == MotionEvent.ACTION_CANCEL){
-                sendVelocity(WELL_STOP,WELL_STOP);
-            }
-            return false;
-        });
-        btnDown.setOnTouchListener((v, event) -> {
-            if(event.getAction() == MotionEvent.ACTION_DOWN){
-                sendVelocity(SX_WELL_MIN,DX_WELL_MIN);
-            }
-            if(event.getAction() == MotionEvent.ACTION_UP || event.getAction() == MotionEvent.ACTION_CANCEL){
-                sendVelocity(WELL_STOP,WELL_STOP);
-            }
-            return false;
-        });
-        btnDownRight.setOnTouchListener((v, event) -> {
-            if(event.getAction() == MotionEvent.ACTION_DOWN){
-                sendVelocity(SX_WELL_MIN,WELL_STOP);
-            }
-            if(event.getAction() == MotionEvent.ACTION_UP || event.getAction() == MotionEvent.ACTION_CANCEL){
-                sendVelocity(WELL_STOP,WELL_STOP);
-            }
-            return false;
-        });
+        btnUpLeft.setOnTouchListener(this);
+        btnUp.setOnTouchListener(this);
+        btnUpRight.setOnTouchListener(this);
+        btnLeft.setOnTouchListener(this);
+        btnRight.setOnTouchListener(this);
+        btnDownLeft.setOnTouchListener(this);
+        btnDown.setOnTouchListener(this);
+        btnDownRight.setOnTouchListener(this);
 
 
     }
@@ -361,8 +397,52 @@ public class MainActivity extends AppCompatActivity {
         startActivity(a);
     }
 
-    public void sendVelocity(int sxV, int dxV){
-        connectedThread.writeVelocity(sxV, dxV);
+    public void sendVelocity(){
+        if(pressedDirections.size() > 0){
+            View v = pressedDirections.lastElement();
+            if(v.equals(btnUpLeft)){
+                connectedThread.writeVelocity(WELL_STOP, DX_WELL_MAX);
+            }
+            if(v.equals(btnUp)){
+                connectedThread.writeVelocity(SX_WELL_MAX, DX_WELL_MAX);
+            }
+            if(v.equals(btnUpRight)){
+                connectedThread.writeVelocity(SX_WELL_MAX, WELL_STOP);
+            }
+            if(v.equals(btnLeft)){
+                connectedThread.writeVelocity(SX_WELL_MIN, DX_WELL_MAX);
+            }
+            if(v.equals(btnRight)){
+                connectedThread.writeVelocity(SX_WELL_MAX, DX_WELL_MIN);
+            }
+            if(v.equals(btnDownLeft)){
+                connectedThread.writeVelocity(WELL_STOP, DX_WELL_MIN);
+            }
+            if(v.equals(btnDown)){
+                connectedThread.writeVelocity(SX_WELL_MIN, DX_WELL_MIN);
+            }
+            if(v.equals(btnDownRight)){
+                connectedThread.writeVelocity(SX_WELL_MIN, WELL_STOP);
+            }
+        }else{
+            connectedThread.writeVelocity(WELL_STOP, WELL_STOP);
+        }
 
+    }
+
+    @Override
+    public boolean onTouch(View v, MotionEvent event){
+        if(event.getAction() == MotionEvent.ACTION_DOWN){
+            if(pressedDirections.size() == 0 || !pressedDirections.lastElement().equals(v)){
+                pressedDirections.add(v);
+                sendVelocity();
+            }
+
+        }
+        if(event.getAction() == MotionEvent.ACTION_UP || event.getAction() == MotionEvent.ACTION_CANCEL){
+            pressedDirections.remove(v);
+            sendVelocity();
+        }
+        return false;
     }
 }
