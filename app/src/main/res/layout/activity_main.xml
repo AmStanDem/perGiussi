@@ -59,7 +59,23 @@
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent" />
 
+    <com.droiduino.bluetoothconn.JoystickView
+        android:id="@+id/joystick"
+        android:layout_width="360dp"
+        android:layout_height="360dp"
+        android:layout_alignParentBottom="true"
+        android:layout_marginTop="90dp"
+        android:background="@drawable/joystick_background"
+        android:visibility="invisible"
+        app:JV_buttonImage="@drawable/pink_ball"
+        app:JV_fixedCenter="false"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <GridLayout
+        android:id="@+id/greed_layout"
         android:layout_width="@dimen/greed_layout_size"
         android:layout_height="@dimen/greed_layout_size"
         android:layout_marginTop="90dp"
@@ -159,6 +175,20 @@
             android:text="button" />
 
     </GridLayout>
+
+    <Switch
+        android:id="@+id/switch_mode"
+        android:layout_width="96dp"
+        android:layout_height="35dp"
+        android:text="@string/switch_mode_arrows"
+        android:trackTint="@color/color_track"
+        android:thumbTint="@color/color_arrows"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.942"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.116" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -5,4 +5,7 @@
     <color name="colorAccent">#E040FB</color>
     <color name="colorOff">#FFFFFF</color>
     <color name="colorOn">#E040FB</color>
+    <color name="color_arrows">#406FFB</color>
+    <color name="color_joystick">#18E42B</color>
+    <color name="color_track">#BDBDBD</color>
 </resources>

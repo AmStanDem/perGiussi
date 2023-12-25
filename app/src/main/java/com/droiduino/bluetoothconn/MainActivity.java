@@ -182,8 +182,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         joystick.setOnMoveListener(new JoystickView.OnMoveListener() {
             @Override
             public void onMove(int angle, int strength) {
-                //Log.d("Status", angle+"  " +strength);
-                int sxV = WELL_STOP, dxV = WELL_STOP;
+                float sxV = WELL_STOP, dxV = WELL_STOP;
                 float sinPercent = 0;
                 float angleRad = (float) Math.toRadians(angle);
                 if(angle >= 0 && angle < 45){
@@ -192,12 +191,14 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                 }
                 if(angle >= 45  && angle < 90){
                     sinPercent = (float)((Math.sin(angleRad)-Math.sin(Math.toRadians(45)))/(Math.sin(Math.toRadians(90))-Math.sin(Math.toRadians(45))));
+                    sinPercent = sinPercent*sinPercent;
                     sxV = SX_WELL_MAX;
-                    dxV = (int)(sinPercent*DX_WELL_MIN);
+                    dxV = (1-sinPercent)*DX_WELL_MIN;
                 }
                 if(angle >= 90  && angle < 90+45){
-                    sinPercent = (float)(Math.sin(angle)*Math.sin(90+45)/Math.sin(90));
-                    sxV = (int)(sinPercent*SX_WELL_MAX);
+                    sinPercent = (float)((Math.sin(angleRad)-Math.sin(Math.toRadians(45)))/(Math.sin(Math.toRadians(90))-Math.sin(Math.toRadians(45))));
+                    sinPercent = sinPercent*sinPercent;
+                    sxV = sinPercent*SX_WELL_MAX;
                     dxV = DX_WELL_MAX;
                 }
                 if(angle >= 90+45  && angle < 180){
@@ -209,14 +210,16 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                     dxV = DX_WELL_MIN;
                 }
                 if(angle >= 180+45  && angle < 270){
-                    sinPercent = -(float)(Math.sin(angle)*Math.sin(270)/Math.sin(180+45));
-                    sxV = (int)(sinPercent*SX_WELL_MIN);
+                    sinPercent = (float)((-Math.sin(angleRad)-Math.sin(Math.toRadians(45)))/(Math.sin(Math.toRadians(90))-Math.sin(Math.toRadians(45))));
+                    sinPercent = sinPercent*sinPercent;
+                    sxV = (1-sinPercent)*SX_WELL_MAX;
                     dxV = DX_WELL_MIN;
                 }
                 if(angle >= 270  && angle < 270+45){
-                    sinPercent = -(float)(Math.sin(angle)*Math.sin(270+45)/Math.sin(270));
+                    sinPercent = (float)((-Math.sin(angleRad)-Math.sin(Math.toRadians(45)))/(Math.sin(Math.toRadians(90))-Math.sin(Math.toRadians(45))));
+                    sinPercent = sinPercent*sinPercent;
                     sxV = SX_WELL_MIN;
-                    dxV = (int)(sinPercent*DX_WELL_MIN);
+                    dxV = sinPercent*DX_WELL_MIN;
                 }
                 if(angle >= 270+45  && angle <= 360){
                     sxV = SX_WELL_MIN;
@@ -226,14 +229,15 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                 sxV = sxV >= WELL_STOP ? sxV - WELL_STOP*(100-strength)/100 : sxV + WELL_STOP*(100-strength)/100;
                 dxV = dxV >= WELL_STOP ? dxV - WELL_STOP*(100-strength)/100 : dxV + WELL_STOP*(100-strength)/100;
 
-                Log.d("Status", sxV+"    "+dxV);
-                Log.d("Status", sinPercent+"");
-                Log.d("Status", Math.sin(Math.toRadians(90))-Math.sin(Math.toRadians(45))+"b");
-                Log.d("Status", Math.sin(Math.toRadians(angle))-Math.sin(Math.toRadians(45))+"d");
-                Log.d("Status", angle+"e");
-                Log.d("Status", Math.sin(Math.toRadians(angle))+"  "+Math.sin(Math.toRadians(90))+"   "+Math.sin(Math.toRadians(45))+"f");
+                //Log.d("Status", "sxV:"+sxV+"    dxV"+dxV);
+                //Log.d("Status", "angle:"+angle+"   angleRad:"+angleRad);
+                //Log.d("Status", "sin%:"+sinPercent);
+                //Log.d("Status", "-------------------------------");
 
-                //connectedThread.writeVelocity(sxV, dxV);
+                if(connectedThread != null){
+                    connectedThread.writeVelocity((int)sxV, (int)dxV);
+                }
+
             }
         });
 
@@ -398,34 +402,36 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     }
 
     public void sendVelocity(){
-        if(pressedDirections.size() > 0){
-            View v = pressedDirections.lastElement();
-            if(v.equals(btnUpLeft)){
-                connectedThread.writeVelocity(WELL_STOP, DX_WELL_MAX);
+        if(connectedThread != null){
+            if(pressedDirections.size() > 0){
+                View v = pressedDirections.lastElement();
+                if(v.equals(btnUpLeft)){
+                    connectedThread.writeVelocity(WELL_STOP, DX_WELL_MAX);
+                }
+                if(v.equals(btnUp)){
+                    connectedThread.writeVelocity(SX_WELL_MAX, DX_WELL_MAX);
+                }
+                if(v.equals(btnUpRight)){
+                    connectedThread.writeVelocity(SX_WELL_MAX, WELL_STOP);
+                }
+                if(v.equals(btnLeft)){
+                    connectedThread.writeVelocity(SX_WELL_MIN, DX_WELL_MAX);
+                }
+                if(v.equals(btnRight)){
+                    connectedThread.writeVelocity(SX_WELL_MAX, DX_WELL_MIN);
+                }
+                if(v.equals(btnDownLeft)){
+                    connectedThread.writeVelocity(WELL_STOP, DX_WELL_MIN);
+                }
+                if(v.equals(btnDown)){
+                    connectedThread.writeVelocity(SX_WELL_MIN, DX_WELL_MIN);
+                }
+                if(v.equals(btnDownRight)){
+                    connectedThread.writeVelocity(SX_WELL_MIN, WELL_STOP);
+                }
+            }else{
+                connectedThread.writeVelocity(WELL_STOP, WELL_STOP);
             }
-            if(v.equals(btnUp)){
-                connectedThread.writeVelocity(SX_WELL_MAX, DX_WELL_MAX);
-            }
-            if(v.equals(btnUpRight)){
-                connectedThread.writeVelocity(SX_WELL_MAX, WELL_STOP);
-            }
-            if(v.equals(btnLeft)){
-                connectedThread.writeVelocity(SX_WELL_MIN, DX_WELL_MAX);
-            }
-            if(v.equals(btnRight)){
-                connectedThread.writeVelocity(SX_WELL_MAX, DX_WELL_MIN);
-            }
-            if(v.equals(btnDownLeft)){
-                connectedThread.writeVelocity(WELL_STOP, DX_WELL_MIN);
-            }
-            if(v.equals(btnDown)){
-                connectedThread.writeVelocity(SX_WELL_MIN, DX_WELL_MIN);
-            }
-            if(v.equals(btnDownRight)){
-                connectedThread.writeVelocity(SX_WELL_MIN, WELL_STOP);
-            }
-        }else{
-            connectedThread.writeVelocity(WELL_STOP, WELL_STOP);
         }
 
     }
@@ -445,4 +451,5 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         }
         return false;
     }
+    //commento
 }
