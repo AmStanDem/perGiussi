@@ -2,9 +2,9 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/constrainLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:rotationY="0"
     android:background="@drawable/background"
     tools:context=".MainActivity">
 
@@ -74,14 +74,90 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/layout_leavers"
+        android:layout_width="366dp"
+        android:layout_height="533dp"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/toolbar"
+        app:layout_constraintVertical_bias="0.7">
+
+        <TextView
+            android:id="@+id/text_seek_l"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:gravity="center"
+            android:text="180"
+            android:textSize="32sp"
+            app:layout_constraintBottom_toTopOf="@+id/sBarLeft"
+            app:layout_constraintEnd_toEndOf="@+id/sBarLeft"
+            app:layout_constraintStart_toStartOf="@+id/sBarLeft" />
+
+        <TextView
+            android:id="@+id/text_seek_r"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:gravity="center"
+            android:text="180"
+            android:textSize="32sp"
+            app:layout_constraintBottom_toTopOf="@+id/sBarRight"
+            app:layout_constraintEnd_toEndOf="@+id/sBarRight"
+            app:layout_constraintStart_toStartOf="@+id/sBarRight" />
+
+        <ImageView
+            android:id="@+id/imageView"
+            android:layout_width="252dp"
+            android:layout_height="5dp"
+            android:background="#494949"
+            app:layout_constraintBottom_toBottomOf="@+id/sBarLeft"
+            app:layout_constraintEnd_toEndOf="@+id/sBarRight"
+            app:layout_constraintStart_toStartOf="@+id/sBarLeft"
+            app:layout_constraintTop_toBottomOf="@+id/text_seek_r" />
+
+        <com.droiduino.bluetoothconn.VerticalSeekBar
+            android:id="@+id/sBarLeft"
+            android:layout_width="80dp"
+            android:layout_height="370dp"
+            android:max="180"
+            android:progress="90"
+            android:rotation="0"
+            android:scaleX="3"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.1"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.7" />
+
+        <com.droiduino.bluetoothconn.VerticalSeekBar
+            android:id="@+id/sBarRight"
+            android:layout_width="80dp"
+            android:layout_height="370dp"
+            android:max="180"
+            android:progress="90"
+            android:rotation="0"
+            android:scaleX="3"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.9"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.7" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
     <GridLayout
-        android:id="@+id/greed_layout"
+        android:id="@+id/layout_arrows"
         android:layout_width="@dimen/greed_layout_size"
         android:layout_height="@dimen/greed_layout_size"
         android:layout_marginTop="90dp"
         android:columnCount="3"
         android:gravity="center"
         android:rowCount="3"
+        android:visibility="visible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -176,19 +252,17 @@
 
     </GridLayout>
 
-    <Switch
-        android:id="@+id/switch_mode"
-        android:layout_width="96dp"
-        android:layout_height="35dp"
-        android:text="@string/switch_mode_arrows"
-        android:trackTint="@color/color_track"
-        android:thumbTint="@color/color_arrows"
+    <Button
+        android:id="@+id/btn_modes"
+        android:layout_width="110dp"
+        android:layout_height="61dp"
+        android:text="mode"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.942"
+        app:layout_constraintHorizontal_bias="0.946"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.116" />
+        app:layout_constraintVertical_bias="0.094" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

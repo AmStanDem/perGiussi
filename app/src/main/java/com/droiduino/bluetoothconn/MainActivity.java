@@ -9,7 +9,6 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
-import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -22,6 +21,7 @@ import android.widget.Button;
 import android.widget.GridLayout;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
+import android.widget.SeekBar;
 import android.widget.Switch;
 import android.widget.TextView;
 
@@ -38,8 +38,10 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     public static final int SX_WELL_MAX = 180, SX_WELL_MIN = 0;
     public static final int DX_WELL_MAX = 0, DX_WELL_MIN = 180;
     public static final int WELL_STOP = 90;
-    public static String arrowsText;
-    public static String joystickText;
+    public static final int MODE_ARROWS = 0, MODE_JOYSTICK = 1, MODE_LEAVERS = 2;
+    public static final int TOTAL_MODES = 3;
+    private int PROGRESS_BARS_STOP_TOLERANCE = 10;
+    public static String arrowsText, joystickText, leaversText;
 
     private String deviceName = null;
     private String deviceAddress;
@@ -57,20 +59,35 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     private ImageButton btnDownLeft, btnDown, btnDownRight;
     private GridLayout gridLayout;
     private JoystickView joystick;
+    private VerticalSeekBar seekBarL, seekBarR;
+    private TextView textSeekL, textSeekR;
+    private int seekBarLVal, seekBarRVal;
+    private int currMode;
+    private View arrowsContainer, joystickContainer, leaversContainer;
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        arrowsText = getString(R.string.switch_mode_arrows);
-        joystickText = getString(R.string.switch_mode_joystick);
+        arrowsText = getResources().getString(R.string.switch_mode_arrows);
+        joystickText = getResources().getString(R.string.switch_mode_joystick);
+        leaversText = getResources().getString(R.string.switch_mode_levers);
+        currMode = MODE_ARROWS;
 
         // UI Initialization
-        gridLayout = findViewById(R.id.greed_layout);
+        gridLayout = findViewById(R.id.layout_arrows);
         joystick = findViewById(R.id.joystick);
+        seekBarL = findViewById(R.id.sBarLeft);
+        seekBarR = findViewById(R.id.sBarRight);
+        textSeekL = findViewById(R.id.text_seek_l);
+        textSeekR = findViewById(R.id.text_seek_r);
+        seekBarLVal = seekBarL.getProgress();
+        seekBarRVal = seekBarR.getProgress();
+        textSeekL.setText(""+seekBarLVal);
+        textSeekR.setText(""+seekBarRVal);
         final Button buttonConnect = findViewById(R.id.buttonConnect);
-        final Switch btnSwitch = findViewById(R.id.switch_mode);
+        final Button btnSwitchModes = findViewById(R.id.btn_modes);
         final Toolbar toolbar = findViewById(R.id.toolbar);
         final ProgressBar progressBar = findViewById(R.id.progressBar);
         progressBar.setVisibility(View.GONE);
@@ -84,14 +101,17 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         btnDown = findViewById(R.id.btn_down);
         btnDownRight = findViewById(R.id.btn_down_right);
 
+        arrowsContainer = findViewById(R.id.layout_arrows);
+        joystickContainer = findViewById(R.id.joystick);
+        leaversContainer = findViewById(R.id.layout_leavers);
+
         //other initializations
         pressedDirections = new Vector<>();
 
 
-
         // If a bluetooth device has been selected from SelectDeviceActivity
         deviceName = getIntent().getStringExtra("deviceName");
-        if (deviceName != null){
+        if (deviceName != null) {
             // Get the device address to make BT Connection
             deviceAddress = getIntent().getStringExtra("deviceAddress");
             // Show progree and connection status
@@ -105,7 +125,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
             selected device (see the thread code below)
              */
             BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-            createConnectThread = new CreateConnectThread(bluetoothAdapter,deviceAddress);
+            createConnectThread = new CreateConnectThread(bluetoothAdapter, deviceAddress);
             createConnectThread.start();
         }
 
@@ -114,10 +134,10 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
          */
         handler = new Handler(Looper.getMainLooper()) {
             @Override
-            public void handleMessage(Message msg){
-                switch (msg.what){
+            public void handleMessage(Message msg) {
+                switch (msg.what) {
                     case CONNECTING_STATUS:
-                        switch(msg.arg1){
+                        switch (msg.arg1) {
                             case 1:
                                 toolbar.setSubtitle("Connected to " + deviceName);
                                 progressBar.setVisibility(View.GONE);
@@ -134,7 +154,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
                     case MESSAGE_READ:
                         String arduinoMsg = msg.obj.toString(); // Read message from Arduino
-                        switch (arduinoMsg.toLowerCase()){
+                        switch (arduinoMsg.toLowerCase()) {
                             case "led is turned on":
 
                                 textViewInfo.setText("Arduino Message : " + arduinoMsg);
@@ -158,24 +178,12 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                 startActivity(intent);
             }
         });
-        btnSwitch.setOnClickListener(new View.OnClickListener() {
+        btnSwitchModes.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if(btnSwitch.getText().toString().equals(arrowsText)){
-                    btnSwitch.setText(joystickText);
-                    gridLayout.setVisibility(View.INVISIBLE);
-                    joystick.setVisibility(View.VISIBLE);
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                        btnSwitch.setThumbTintList(AppCompatResources.getColorStateList(MainActivity.this,R.color.color_joystick));
-                    }
-                }else {
-                    btnSwitch.setText(arrowsText);
-                    gridLayout.setVisibility(View.VISIBLE);
-                    joystick.setVisibility(View.INVISIBLE);
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                        btnSwitch.setThumbTintList(AppCompatResources.getColorStateList(MainActivity.this,R.color.color_arrows));
-                    }
-                }
+                currMode = (currMode+1)%TOTAL_MODES;
+
+                graphicUpdate();
             }
 
         });
@@ -185,61 +193,100 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                 float sxV = WELL_STOP, dxV = WELL_STOP;
                 float sinPercent = 0;
                 float angleRad = (float) Math.toRadians(angle);
-                if(angle >= 0 && angle < 45){
+                if (angle >= 0 && angle < 45) {
                     sxV = SX_WELL_MAX;
                     dxV = DX_WELL_MIN;
                 }
-                if(angle >= 45  && angle < 90){
-                    sinPercent = (float)((Math.sin(angleRad)-Math.sin(Math.toRadians(45)))/(Math.sin(Math.toRadians(90))-Math.sin(Math.toRadians(45))));
-                    sinPercent = sinPercent*sinPercent;
+                if (angle >= 45 && angle < 90) {
+                    sinPercent = (float) ((Math.sin(angleRad) - Math.sin(Math.toRadians(45))) / (Math.sin(Math.toRadians(90)) - Math.sin(Math.toRadians(45))));
+                    sinPercent = sinPercent * sinPercent;
                     sxV = SX_WELL_MAX;
-                    dxV = (1-sinPercent)*DX_WELL_MIN;
+                    dxV = (1 - sinPercent) * DX_WELL_MIN;
                 }
-                if(angle >= 90  && angle < 90+45){
-                    sinPercent = (float)((Math.sin(angleRad)-Math.sin(Math.toRadians(45)))/(Math.sin(Math.toRadians(90))-Math.sin(Math.toRadians(45))));
-                    sinPercent = sinPercent*sinPercent;
-                    sxV = sinPercent*SX_WELL_MAX;
+                if (angle >= 90 && angle < 90 + 45) {
+                    sinPercent = (float) ((Math.sin(angleRad) - Math.sin(Math.toRadians(45))) / (Math.sin(Math.toRadians(90)) - Math.sin(Math.toRadians(45))));
+                    sinPercent = sinPercent * sinPercent;
+                    sxV = sinPercent * SX_WELL_MAX;
                     dxV = DX_WELL_MAX;
                 }
-                if(angle >= 90+45  && angle < 180){
+                if (angle >= 90 + 45 && angle < 180) {
                     sxV = SX_WELL_MIN;
                     dxV = DX_WELL_MAX;
                 }
-                if(angle >= 180  && angle < 180+45){
+                if (angle >= 180 && angle < 180 + 45) {
                     sxV = SX_WELL_MAX;
                     dxV = DX_WELL_MIN;
                 }
-                if(angle >= 180+45  && angle < 270){
-                    sinPercent = (float)((-Math.sin(angleRad)-Math.sin(Math.toRadians(45)))/(Math.sin(Math.toRadians(90))-Math.sin(Math.toRadians(45))));
-                    sinPercent = sinPercent*sinPercent;
-                    sxV = (1-sinPercent)*SX_WELL_MAX;
+                if (angle >= 180 + 45 && angle < 270) {
+                    sinPercent = (float) ((-Math.sin(angleRad) - Math.sin(Math.toRadians(45))) / (Math.sin(Math.toRadians(90)) - Math.sin(Math.toRadians(45))));
+                    sinPercent = sinPercent * sinPercent;
+                    sxV = (1 - sinPercent) * SX_WELL_MAX;
                     dxV = DX_WELL_MIN;
                 }
-                if(angle >= 270  && angle < 270+45){
-                    sinPercent = (float)((-Math.sin(angleRad)-Math.sin(Math.toRadians(45)))/(Math.sin(Math.toRadians(90))-Math.sin(Math.toRadians(45))));
-                    sinPercent = sinPercent*sinPercent;
+                if (angle >= 270 && angle < 270 + 45) {
+                    sinPercent = (float) ((-Math.sin(angleRad) - Math.sin(Math.toRadians(45))) / (Math.sin(Math.toRadians(90)) - Math.sin(Math.toRadians(45))));
+                    sinPercent = sinPercent * sinPercent;
                     sxV = SX_WELL_MIN;
-                    dxV = sinPercent*DX_WELL_MIN;
+                    dxV = sinPercent * DX_WELL_MIN;
                 }
-                if(angle >= 270+45  && angle <= 360){
+                if (angle >= 270 + 45 && angle <= 360) {
                     sxV = SX_WELL_MIN;
                     dxV = DX_WELL_MAX;
                 }
 
-                sxV = sxV >= WELL_STOP ? sxV - WELL_STOP*(100-strength)/100 : sxV + WELL_STOP*(100-strength)/100;
-                dxV = dxV >= WELL_STOP ? dxV - WELL_STOP*(100-strength)/100 : dxV + WELL_STOP*(100-strength)/100;
+                sxV = sxV >= WELL_STOP ? sxV - WELL_STOP * (100 - strength) / 100 : sxV + WELL_STOP * (100 - strength) / 100;
+                dxV = dxV >= WELL_STOP ? dxV - WELL_STOP * (100 - strength) / 100 : dxV + WELL_STOP * (100 - strength) / 100;
 
                 //Log.d("Status", "sxV:"+sxV+"    dxV"+dxV);
                 //Log.d("Status", "angle:"+angle+"   angleRad:"+angleRad);
                 //Log.d("Status", "sin%:"+sinPercent);
                 //Log.d("Status", "-------------------------------");
 
-                if(connectedThread != null){
-                    connectedThread.writeVelocity((int)sxV, (int)dxV);
+                if (connectedThread != null) {
+                    connectedThread.writeVelocity((int) sxV, (int) dxV);
                 }
 
             }
         });
+        SeekBar.OnSeekBarChangeListener sBarrListener = new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if(Math.abs(seekBar.getProgress()-(seekBar.getMax()/2)) <= PROGRESS_BARS_STOP_TOLERANCE){
+                    progress = seekBar.getMax()/2;
+                }
+
+                if(seekBar == seekBarR){
+                    if(progress != seekBarRVal){
+                        seekBarRVal = progress;
+                        textSeekR.setText(""+seekBarRVal);
+                        //Log.println(Log.ASSERT,"debug",seekBarLVal+"   "+ (180-seekBarRVal));
+
+
+                        if (connectedThread != null) {
+                            connectedThread.writeVelocity(seekBarLVal, 180-seekBarRVal);
+                        }
+                    }
+                }else {
+                    if(progress != seekBarLVal){
+                        seekBarLVal = progress;
+                        textSeekL.setText(""+seekBarLVal);
+                        //Log.println(Log.ASSERT,"debug",seekBarLVal+"   "+ (180-seekBarRVal));
+
+
+                        if (connectedThread != null) {
+                            connectedThread.writeVelocity(seekBarLVal, 180-seekBarRVal);
+                        }
+                    }
+                }
+
+            }
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {}//not usable
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {}//not usable
+        };
+        seekBarL.setOnSeekBarChangeListener(sBarrListener);
+        seekBarR.setOnSeekBarChangeListener(sBarrListener);
 
         //set on touch for movement button
         btnUpLeft.setOnTouchListener(this);
@@ -252,6 +299,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         btnDownRight.setOnTouchListener(this);
 
 
+        graphicUpdate();
     }
 
     /* ============================ Thread to Create Bluetooth Connection =================================== */
@@ -392,7 +440,8 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     @Override
     public void onBackPressed() {
         // Terminate Bluetooth Connection and close app
-        if (createConnectThread != null){
+        super.onBackPressed();
+        if (createConnectThread != null) {
             createConnectThread.cancel();
         }
         Intent a = new Intent(Intent.ACTION_MAIN);
@@ -435,20 +484,29 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         }
 
     }
+    public void graphicUpdate(){
+        arrowsContainer.setVisibility(currMode == MODE_ARROWS ? View.VISIBLE : View.INVISIBLE);
+        joystickContainer.setVisibility(currMode == MODE_JOYSTICK ? View.VISIBLE : View.INVISIBLE);
+        leaversContainer.setVisibility(currMode == MODE_LEAVERS ? View.VISIBLE : View.INVISIBLE);
+
+    }
 
     @Override
     public boolean onTouch(View v, MotionEvent event){
-        if(event.getAction() == MotionEvent.ACTION_DOWN){
-            if(pressedDirections.size() == 0 || !pressedDirections.lastElement().equals(v)){
-                pressedDirections.add(v);
+        if(connectedThread != null){
+            if(event.getAction() == MotionEvent.ACTION_DOWN){
+                if(pressedDirections.size() == 0 || !pressedDirections.lastElement().equals(v)){
+                    pressedDirections.add(v);
+                    sendVelocity();
+                }
+
+            }
+            if(event.getAction() == MotionEvent.ACTION_UP || event.getAction() == MotionEvent.ACTION_CANCEL){
+                pressedDirections.remove(v);
                 sendVelocity();
             }
+        }
 
-        }
-        if(event.getAction() == MotionEvent.ACTION_UP || event.getAction() == MotionEvent.ACTION_CANCEL){
-            pressedDirections.remove(v);
-            sendVelocity();
-        }
         return false;
     }
     //commento

@@ -1,5 +1,6 @@
 <resources>
-    <string name="app_name">Droiduino Bluetooth Connection</string>
+    <string name="app_name">controller robocalcio</string>
     <string name="switch_mode_joystick">joystick</string>
     <string name="switch_mode_arrows">arrows</string>
+    <string name="switch_mode_levers">levers</string>
 </resources>
