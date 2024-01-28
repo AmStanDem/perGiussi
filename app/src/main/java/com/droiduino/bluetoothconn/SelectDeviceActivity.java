@@ -48,7 +48,7 @@ public class SelectDeviceActivity extends AppCompatActivity {
             recyclerView.setItemAnimator(new DefaultItemAnimator());
         } else {
             View view = findViewById(R.id.recyclerViewDevice);
-            Snackbar snackbar = Snackbar.make(view, "Activate Bluetooth or pair a Bluetooth device", Snackbar.LENGTH_INDEFINITE);
+            Snackbar snackbar = Snackbar.make(view, "attiva e autorizza il bluetooth ed associa l'arduino", Snackbar.LENGTH_INDEFINITE);
             snackbar.setAction("OK", new View.OnClickListener() {
                 @Override
                 public void onClick(View view) { }

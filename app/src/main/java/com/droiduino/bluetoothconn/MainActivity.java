@@ -30,6 +30,7 @@ import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.Toast;
 
 
 import java.io.IOException;
@@ -180,12 +181,13 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
             @Override
             public void onClick(View view) {
                 //Log.e(TAG,"onClick 1");
-                if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+                if (checkCallingOrSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
                     ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.BLUETOOTH_CONNECT}, 2);
                     //Log.e(TAG,"onClick asked permission");
+                    Toast.makeText(MainActivity.this,"dovresti autorizzare il bluetooth",Toast.LENGTH_LONG).show();
                 }
 
-                if(ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED){
+                if(checkCallingOrSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED){
                     // Move to adapter list
                     Intent intent = new Intent(MainActivity.this, SelectDeviceActivity.class);
                     //Log.e(TAG,"Intent intent");
@@ -314,11 +316,12 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         btnDown.setOnTouchListener(this);
         btnDownRight.setOnTouchListener(this);
 
-        if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+        if (checkCallingOrSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.BLUETOOTH_CONNECT}, 2);
+            Toast.makeText(MainActivity.this,"dovresti autorizzare il bluetooth",Toast.LENGTH_LONG).show();
             //Log.d(TAG,"on create asked permission");
         }
-        //if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED) {
+        //if (checkCallingOrSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED) {
         //    Log.d(TAG,"yayyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy");
         //}
         graphicUpdate();
