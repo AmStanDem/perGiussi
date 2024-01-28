@@ -3,12 +3,18 @@ package com.droiduino.bluetoothconn;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.content.res.AppCompatResources;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -125,7 +131,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
             selected device (see the thread code below)
              */
             BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-            createConnectThread = new CreateConnectThread(bluetoothAdapter, deviceAddress);
+            createConnectThread = new CreateConnectThread(this, bluetoothAdapter, deviceAddress);
             createConnectThread.start();
         }
 
@@ -173,9 +179,19 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         buttonConnect.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                // Move to adapter list
-                Intent intent = new Intent(MainActivity.this, SelectDeviceActivity.class);
-                startActivity(intent);
+                //Log.e(TAG,"onClick 1");
+                if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+                    ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.BLUETOOTH_CONNECT}, 2);
+                    //Log.e(TAG,"onClick asked permission");
+                }
+
+                if(ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED){
+                    // Move to adapter list
+                    Intent intent = new Intent(MainActivity.this, SelectDeviceActivity.class);
+                    //Log.e(TAG,"Intent intent");
+                    startActivity(intent);
+                    //Log.e(TAG,"startActivity");
+                }
             }
         });
         btnSwitchModes.setOnClickListener(new View.OnClickListener() {
@@ -298,14 +314,22 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         btnDown.setOnTouchListener(this);
         btnDownRight.setOnTouchListener(this);
 
-
+        if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.BLUETOOTH_CONNECT}, 2);
+            //Log.d(TAG,"on create asked permission");
+        }
+        //if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED) {
+        //    Log.d(TAG,"yayyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy");
+        //}
         graphicUpdate();
     }
 
     /* ============================ Thread to Create Bluetooth Connection =================================== */
     public static class CreateConnectThread extends Thread {
+        Context context;
 
-        public CreateConnectThread(BluetoothAdapter bluetoothAdapter, String address) {
+        public CreateConnectThread(Context context, BluetoothAdapter bluetoothAdapter, String address) {
+            this.context = context;
             /*
             Use a temporary object that is later assigned to mmSocket
             because mmSocket is final.
@@ -315,12 +339,6 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
             UUID uuid = bluetoothDevice.getUuids()[0].getUuid();
 
             try {
-                /*
-                Get a BluetoothSocket to connect with the given BluetoothDevice.
-                Due to Android device varieties,the method below may not work fo different devices.
-                You should try using other methods i.e. :
-                tmp = device.createRfcommSocketToServiceRecord(MY_UUID);
-                 */
                 tmp = bluetoothDevice.createInsecureRfcommSocketToServiceRecord(uuid);
 
             } catch (IOException e) {
