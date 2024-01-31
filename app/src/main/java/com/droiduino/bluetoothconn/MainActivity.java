@@ -3,13 +3,15 @@ package com.droiduino.bluetoothconn;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.content.res.AppCompatResources;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
-import android.graphics.Color;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -24,6 +26,7 @@ import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.Toast;
 
 
 import java.io.IOException;
@@ -38,6 +41,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     public static final int SX_WELL_MAX = 180, SX_WELL_MIN = 0;
     public static final int DX_WELL_MAX = 0, DX_WELL_MIN = 180;
     public static final int WELL_STOP = 90;
+    public static final int JOYSTICK_STRENGTH_MIN = 33;
     public static String arrowsText;
     public static String joystickText;
 
@@ -153,9 +157,14 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         buttonConnect.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                // Move to adapter list
-                Intent intent = new Intent(MainActivity.this, SelectDeviceActivity.class);
-                startActivity(intent);
+                if (checkCallingOrSelfPermission(Manifest.permission.BLUETOOTH) == PackageManager.PERMISSION_GRANTED) {
+                    // Move to adapter list
+                    Intent intent = new Intent(MainActivity.this, SelectDeviceActivity.class);
+                    startActivity(intent);
+                }else {
+                    ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.BLUETOOTH}, 2);
+                    Toast.makeText(MainActivity.this,"dovresti autorizzare il bluetooth",Toast.LENGTH_LONG).show();
+                }
             }
         });
         btnSwitch.setOnClickListener(new View.OnClickListener() {
@@ -183,56 +192,40 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
             @Override
             public void onMove(int angle, int strength) {
                 float sxV = WELL_STOP, dxV = WELL_STOP;
-                float sinPercent = 0;
-                float angleRad = (float) Math.toRadians(angle);
-                if(angle >= 0 && angle < 45){
-                    sxV = SX_WELL_MAX;
-                    dxV = DX_WELL_MIN;
-                }
-                if(angle >= 45  && angle < 90){
-                    sinPercent = (float)((Math.sin(angleRad)-Math.sin(Math.toRadians(45)))/(Math.sin(Math.toRadians(90))-Math.sin(Math.toRadians(45))));
-                    sinPercent = sinPercent*sinPercent;
-                    sxV = SX_WELL_MAX;
-                    dxV = (1-sinPercent)*DX_WELL_MIN;
-                }
-                if(angle >= 90  && angle < 90+45){
-                    sinPercent = (float)((Math.sin(angleRad)-Math.sin(Math.toRadians(45)))/(Math.sin(Math.toRadians(90))-Math.sin(Math.toRadians(45))));
-                    sinPercent = sinPercent*sinPercent;
-                    sxV = sinPercent*SX_WELL_MAX;
-                    dxV = DX_WELL_MAX;
-                }
-                if(angle >= 90+45  && angle < 180){
-                    sxV = SX_WELL_MIN;
-                    dxV = DX_WELL_MAX;
-                }
-                if(angle >= 180  && angle < 180+45){
-                    sxV = SX_WELL_MAX;
-                    dxV = DX_WELL_MIN;
-                }
-                if(angle >= 180+45  && angle < 270){
-                    sinPercent = (float)((-Math.sin(angleRad)-Math.sin(Math.toRadians(45)))/(Math.sin(Math.toRadians(90))-Math.sin(Math.toRadians(45))));
-                    sinPercent = sinPercent*sinPercent;
-                    sxV = (1-sinPercent)*SX_WELL_MAX;
-                    dxV = DX_WELL_MIN;
-                }
-                if(angle >= 270  && angle < 270+45){
-                    sinPercent = (float)((-Math.sin(angleRad)-Math.sin(Math.toRadians(45)))/(Math.sin(Math.toRadians(90))-Math.sin(Math.toRadians(45))));
-                    sinPercent = sinPercent*sinPercent;
-                    sxV = SX_WELL_MIN;
-                    dxV = sinPercent*DX_WELL_MIN;
-                }
-                if(angle >= 270+45  && angle <= 360){
-                    sxV = SX_WELL_MIN;
-                    dxV = DX_WELL_MAX;
+
+                if(strength >= JOYSTICK_STRENGTH_MIN){
+
+                    if(angle <= 22 || angle >= 360-22){
+                        sxV = SX_WELL_MAX;
+                        dxV = DX_WELL_MIN;
+                    }
+                    if(angle > 22  && angle < 22+45){
+                        sxV = SX_WELL_MAX;
+                    }
+                    if(angle >= 22+45  && angle <= 22+45+45){
+                        sxV = SX_WELL_MAX;
+                        dxV = DX_WELL_MAX;
+                    }
+                    if (angle > 180-22-45 && angle < 180-22){
+                        sxV = WELL_STOP;
+                        dxV = DX_WELL_MAX;
+                    }
+                    if (angle >= 180-22 && angle <= 180+22){
+                        sxV = SX_WELL_MIN;
+                        dxV = DX_WELL_MAX;
+                    }
+                    if (angle > 180+22 && angle < 180+22+45){
+                        dxV = DX_WELL_MIN;
+                    }
+                    if (angle >= 180+22+45 && angle <= 180+22+45+45){
+                        sxV = SX_WELL_MIN;
+                        dxV = DX_WELL_MIN;
+                    }
+                    if (angle >= 360-22-45 && angle <=  360-22){
+                        sxV = SX_WELL_MIN;
+                    }
                 }
 
-                sxV = sxV >= WELL_STOP ? sxV - WELL_STOP*(100-strength)/100 : sxV + WELL_STOP*(100-strength)/100;
-                dxV = dxV >= WELL_STOP ? dxV - WELL_STOP*(100-strength)/100 : dxV + WELL_STOP*(100-strength)/100;
-
-                //Log.d("Status", "sxV:"+sxV+"    dxV"+dxV);
-                //Log.d("Status", "angle:"+angle+"   angleRad:"+angleRad);
-                //Log.d("Status", "sin%:"+sinPercent);
-                //Log.d("Status", "-------------------------------");
 
                 if(connectedThread != null){
                     connectedThread.writeVelocity((int)sxV, (int)dxV);
@@ -252,6 +245,14 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         btnDownRight.setOnTouchListener(this);
 
 
+        if (checkCallingOrSelfPermission(Manifest.permission.BLUETOOTH) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.BLUETOOTH}, 2);
+            Toast.makeText(MainActivity.this,"dovresti autorizzare il bluetooth",Toast.LENGTH_LONG).show();
+            Log.d(TAG,"on create asked permission");
+        }
+        //if (checkCallingOrSelfPermission(Manifest.permission.BLUETOOTH) == PackageManager.PERMISSION_GRANTED) {
+        //    Log.d(TAG,"yayyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy");
+        //}
     }
 
     /* ============================ Thread to Create Bluetooth Connection =================================== */
@@ -324,6 +325,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         private final BluetoothSocket mmSocket;
         private final InputStream mmInStream;
         private final OutputStream mmOutStream;
+        int lastVSx, lastVDx;
 
         public ConnectedThread(BluetoothSocket socket) {
             mmSocket = socket;
@@ -339,6 +341,10 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
             mmInStream = tmpIn;
             mmOutStream = tmpOut;
+
+            lastVSx = -1;
+            lastVDx = -1;
+            writeVelocity(WELL_STOP,WELL_STOP);
         }
 
         public void run() {
@@ -370,13 +376,19 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
         /* Call this from the main activity to send data to the remote device */
         public void writeVelocity(int sxV, int dxV) {
-            byte[] bytes = new byte[2];
-            bytes[0] = new Integer(sxV).byteValue();
-            bytes[1] = new Integer(dxV).byteValue();
-            try {
-                mmOutStream.write(bytes);
-            } catch (IOException e) {
-                Log.e("Send Error","Unable to send message",e);
+            if(sxV != lastVSx || dxV != lastVDx){
+                lastVSx = sxV;
+                lastVDx = dxV;
+
+                byte[] bytes = new byte[2];
+                bytes[0] = Integer.valueOf(sxV).byteValue();
+                bytes[1] = Integer.valueOf(dxV).byteValue();
+                try {
+                    mmOutStream.write(bytes);
+                    //Log.e(TAG,"send a message");
+                } catch (IOException e) {
+                    Log.e("Send Error","Unable to send message",e);
+                }
             }
         }
 
@@ -385,6 +397,14 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
             try {
                 mmSocket.close();
             } catch (IOException e) { }
+        }
+        public void closeConnection(){
+            try {
+                mmOutStream.close();
+                mmInStream.close();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
@@ -451,5 +471,19 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         }
         return false;
     }
-    //commento
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        if(connectedThread != null){
+            connectedThread.closeConnection();
+        }
+        //tutte le volte che si chiude il canale di output vengono inviati dei bit che sono interpretati da arduino come delle velocità.
+        //per evitare the il robot legga queste velocità sarebbe necessario decidere un numero (tipo -1) che viene invitato
+        // come primo ciclo di comunicaizone tra telefono ed arduino e che all'interno dell'arduino triggheri uno stato
+        // di connesso o no. questo messaggio sarebbe quindi inviato sia all'inizio di una comunicazione che alla fine.
+    }
+
 }
+
